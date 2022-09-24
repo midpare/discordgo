@@ -1,0 +1,23 @@
+{
+	"GetCommand": {
+		"prefix": "cm",
+		"body": [
+			"package commands\n",
+			"import (",
+			"  . \"discordbot/src/global\"",
+			"  \"discordbot/src/packets\"",
+			")\n",
+			"var $1 = &packets.ApplicationCommand{",
+			"  Name: \"$2\",",
+			"  Category: \"$3\",",
+			"  Usage: \"$4\",",
+			"  Description: \"$5\",${6:\n  Options: []*packets.ApplicationCommandOption{\n  \n  },}",
+			"  Execute: func(interaction *packets.Interaction) (message *packets.MessagePacket, success bool) {",
+			"    message = &packets.MessagePacket{}",
+			"    guildId := interaction.GuildId",
+			"    id := interaction.User.Id",
+			"  },",
+			"}"
+		],
+	},
+}
