@@ -1,15 +1,15 @@
 package events
 
 import (
-	"discordbot/src/structs"
+	"discordbot/src/packets"
 	"fmt"
 	"log"
 )
 
-func MessageCreate(msg *structs.Message) {
-	if msg.Author.Bot {
+func MessageCreate(message *packets.Message) {
+	if message.Author.Bot {
 		return
 	}
 
-	log.Fatalf(fmt.Sprintf("%s: %s", msg.Author.Username, msg.Content))
+	log.Printf(fmt.Sprintf("%s: %s", message.Author.Username, message.Content))
 }

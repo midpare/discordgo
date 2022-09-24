@@ -3,7 +3,7 @@ package client
 import (
 	"bytes"
 	"discordbot/src/events"
-	. "discordbot/src/structs"
+	. "discordbot/src/packets"
 	"discordbot/src/utils"
 	"encoding/json"
 	"log"
@@ -20,9 +20,9 @@ type Client struct {
 	Token             string
 	Websocket         *websocket.Conn
 	LastSequence      int
-	HeartbeatInterval int
-	HeartbeatDate     int64
-	ResumeDate        int64
+	HeartbeatInterval time.Duration
+	ReceiveHeartbeat  chan bool
+	IsConnect         chan bool
 	SessionId         string
 	ResumeGatewayUrl  string
 	Guilds            map[utils.Snowflake]*Guild
@@ -40,32 +40,32 @@ func NewClient() (client Client, err error) {
 	}
 
 	return Client{
-		Token:         os.Getenv("DISCORD_TOKEN"),
-		Websocket:     websocket,
-		HeartbeatDate: time.Now().UnixMilli(),
-		ResumeDate:    time.Now().UnixMilli(),
-		Guilds:        make(map[utils.Snowflake]*Guild),
-		Channels:      make(map[utils.Snowflake]*Channel),
+		Token:            os.Getenv("DISCORD_TOKEN"),
+		Websocket:        websocket,
+		ReceiveHeartbeat: make(chan bool),
+		Guilds:           make(map[utils.Snowflake]*Guild),
+		Channels:         make(map[utils.Snowflake]*Channel),
 	}, nil
 }
 
 func (client *Client) Login() {
-	msgType, msg, err := client.Websocket.ReadMessage()
+	messageType, message, err := client.Websocket.ReadMessage()
 
 	if err != nil {
 		log.Fatalf("error reading hello message \n%s", err)
 	}
 
-	client.HandleMessage(msgType, msg)
-	go client.Heartbeat()
-	go client.Resume()
+	client.handleMessage(messageType, message)
 
-	packet := IdentifyPacket{
+	go client.heartbeat()
+	go client.resume()
+
+	packet := Identify{
 		Operation: OperationCode_Identify,
-		Data: IdentifyPacketData{
+		Data: IdentifyData{
 			Token:   client.Token,
 			Intents: uint64(IntentsAll),
-			Properties: IdentifyPacketDataProperties{
+			Properties: IdentifyDataProperties{
 				Os:      "window",
 				Browser: "discord",
 				Device:  "discord",
@@ -78,18 +78,13 @@ func (client *Client) Login() {
 	client.listen()
 }
 
-func (client *Client) Heartbeat() {
-	for {
-		date := client.HeartbeatDate
-		now := time.Now().UnixMilli()
-		if int(now)-int(date) < client.HeartbeatInterval/3 {
-			continue
-		} else {
-			client.Lock()
-			client.HeartbeatDate = time.Now().UnixMilli()
-			client.Unlock()
+func (client *Client) heartbeat() {
+	ticker := time.NewTicker(client.HeartbeatInterval / 3)
 
-			packet := HeartbeatPacket{
+	for {
+		select {
+		case <-ticker.C:
+			packet := Heartbeat{
 				Operation: OperationCode_Heartbeat,
 				Data:      client.LastSequence,
 			}
@@ -99,34 +94,23 @@ func (client *Client) Heartbeat() {
 	}
 }
 
-func (client *Client) Resume() {
+func (client *Client) resume() {
+	timer := time.NewTimer(client.HeartbeatInterval + (time.Second * 3))
+
 	for {
-		date := client.ResumeDate
-		now := time.Now().UnixMilli()
-		if int(now)-int(date) < client.HeartbeatInterval+1000*3 {
-			continue
-		} else {
-			client.Lock()
-			client.ResumeDate = time.Now().UnixMilli()
-			client.Unlock()
-
-			packet := ResumePacket{
-				Operation: OperationCode(OperationCode_Resume),
-				Data: ResumePacketData{
-					Token:     client.Token,
-					SessionId: client.SessionId,
-					Sequence:  client.LastSequence,
-				},
-			}
-
-			client.Websocket.WriteJSON(packet)
+		select {
+		case <-timer.C:
+			log.Println("connect failed!")
+		case <-client.ReceiveHeartbeat:
+			timer.Stop()
+			timer = time.NewTimer(client.HeartbeatInterval + (time.Second * 3))
 		}
 	}
 }
 
-func (client *Client) HandleMessage(msgType int, msg []byte) {
+func (client *Client) handleMessage(messageType int, message []byte) {
 	var event *BaseEvent
-	if err := json.NewDecoder(bytes.NewBuffer(msg)).Decode(&event); err != nil {
+	if err := json.NewDecoder(bytes.NewBuffer(message)).Decode(&event); err != nil {
 		log.Fatalf("error decoding base message \n%s", err)
 	}
 	client.Lock()
@@ -138,8 +122,7 @@ func (client *Client) HandleMessage(msgType int, msg []byte) {
 
 	switch event.Operation {
 	case OperationCode(OperationCode_Dispatch):
-		client.HandleEvent(event)
-		return
+		client.handleEvent(event)
 	case OperationCode(OperationCode_Hello):
 
 		var data *HelloData
@@ -148,16 +131,13 @@ func (client *Client) HandleMessage(msgType int, msg []byte) {
 			log.Fatalf("error decoding hello event data \n%s", err)
 		}
 
-		client.HeartbeatInterval = data.Heartbeat
-		client.ResumeDate = time.Now().UnixMilli()
-		return
+		client.HeartbeatInterval = data.Heartbeat * time.Millisecond
 	case OperationCode(OperationCode_HeartbeatACK):
-		client.ResumeDate = time.Now().UnixMilli()
-		return
+		client.ReceiveHeartbeat <- true
 	}
 }
 
-func (client *Client) HandleEvent(event *BaseEvent) {
+func (client *Client) handleEvent(event *BaseEvent) {
 	switch event.Type {
 	case EventType_Ready:
 		var data *Ready
@@ -168,21 +148,19 @@ func (client *Client) HandleEvent(event *BaseEvent) {
 		client.ResumeGatewayUrl = data.ResumeGatewayUrl
 
 		events.Ready(data)
-		return
 	case EventType_MessageCreate:
-		var msg *Message
-		if err := json.Unmarshal(event.Data, &msg); err != nil {
+		var message *Message
+		if err := json.Unmarshal(event.Data, &message); err != nil {
 			log.Fatalf("error decoding message create event data \n%s", err)
 		}
 
-		events.MessageCreate(msg)
-		return
+		events.MessageCreate(message)
 	case EventType_InteractionCreate:
 		var interaction *Interaction
 		if err := json.Unmarshal(event.Data, &interaction); err != nil {
 			log.Fatalf("error decoding guild create event data")
 		}
-
+		interaction.Parse()
 		events.InteractionCreate(interaction)
 	case EventType_GuildCreate:
 		var guild *Guild
@@ -194,17 +172,16 @@ func (client *Client) HandleEvent(event *BaseEvent) {
 		for _, channel := range guild.Channels {
 			client.Channels[channel.Id] = channel
 		}
-		return
 	}
 }
 
 func (client *Client) listen() {
 	for {
-		msgType, msg, err := client.Websocket.ReadMessage()
+		messageType, message, err := client.Websocket.ReadMessage()
 		if err != nil {
 			log.Fatalf("error listening message \n%s", err)
 		}
 
-		client.HandleMessage(msgType, msg)
+		client.handleMessage(messageType, message)
 	}
 }

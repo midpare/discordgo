@@ -2,14 +2,15 @@ package events
 
 import (
 	"discordbot/src/commands"
+	"discordbot/src/packets"
 	"discordbot/src/rest"
-	"discordbot/src/structs"
 	"fmt"
 	"log"
 )
 
-func Ready(data *structs.Ready) {
+func Ready(data *packets.Ready) {
 
 	log.Println("success to login!")
-	rest.Put(fmt.Sprintf("/applications/%s/commands", data.User.Id), commands.Handle())
+	arr := commands.Handle()
+	rest.Put(fmt.Sprintf("/applications/%s/commands", data.User.Id), arr)
 }
