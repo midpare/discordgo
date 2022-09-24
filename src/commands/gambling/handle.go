@@ -12,5 +12,4 @@ func init() {
 	Gambling_commands[Gambling.Name] = Gambling
 	Gambling_commands[Half.Name] = Half
 	Gambling_commands[Join.Name] = Join
-	Gambling_commands[Ranking.Name] = Ranking
 }
