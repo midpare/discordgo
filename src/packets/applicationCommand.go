@@ -2,9 +2,11 @@ package packets
 
 import (
 	. "discordbot/src/utils"
+
+	"golang.org/x/text/message"
 )
 
-type Interaction_Execute func(*Interaction) (*MessagePacket, bool)
+type Interaction_Execute func(interaction *Interaction, p *message.Printer) (message *MessagePacket, success bool)
 
 type ApplicationCommandType uint
 type ApplicationCommandOptionType uint
@@ -31,7 +33,7 @@ const (
 
 type ApplicationCommandOptionChoice struct {
 	Name  string `json:"name"`
-	Value int    `json:"value"`
+	Value string `json:"value"`
 }
 
 type ApplicationCommandOption struct {

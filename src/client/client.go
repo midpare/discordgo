@@ -158,14 +158,14 @@ func (client *Client) handleEvent(event *BaseEvent) {
 	case EventType_InteractionCreate:
 		var interaction *Interaction
 		if err := json.Unmarshal(event.Data, &interaction); err != nil {
-			log.Fatalf("error decoding guild create event data")
+			log.Fatalf("error decoding guild create event data \n%s", err)
 		}
 		interaction.Parse()
 		events.InteractionCreate(interaction)
 	case EventType_GuildCreate:
 		var guild *Guild
 		if err := json.Unmarshal(event.Data, &guild); err != nil {
-			log.Fatalf("error decoding guild create event data")
+			log.Fatalf("error decoding guild create event data \n%s", err)
 		}
 
 		client.Guilds[guild.Id] = guild

@@ -107,7 +107,15 @@ func (interaction *Interaction) Parse() {
 	for _, val := range interaction.Data.Options {
 		interaction.Options[val.Name] = val
 	}
-	interaction.User = interaction.Member.User
 	interaction.Data.Options = nil
-	interaction.Member.User = nil
+
+	if interaction.GuildId != "" {
+		interaction.User = interaction.Member.User
+		interaction.Member.User = nil
+		if interaction.Member.Nick == "" {
+			interaction.Member.DisplayName = interaction.User.Username
+		} else {
+			interaction.Member.DisplayName = interaction.Member.Nick
+		}
+	}
 }

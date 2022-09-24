@@ -1,17 +1,23 @@
 package commands
 
 import (
-	. "discordbot/src/commands/gambling"
-	. "discordbot/src/commands/normal"
+	gambling "discordbot/src/commands/gambling"
+	normal "discordbot/src/commands/normal"
+
 	"discordbot/src/packets"
 )
 
 var Commands = make(map[string]*packets.ApplicationCommand)
 
 func Handle() []*packets.ApplicationCommand {
-	Commands[Ping.Name] = Ping
-	Commands[Gambling.Name] = Gambling
-	Commands[Join.Name] = Join
+	for k, v := range gambling.Gambling_commands {
+		Commands[k] = v
+	}
+
+	for k, v := range normal.Normal_commands {
+		Commands[k] = v
+	}
+
 	arr := []*packets.ApplicationCommand{}
 
 	for _, val := range Commands {

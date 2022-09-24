@@ -7,7 +7,7 @@ type Gambling struct {
 	GuildId        Snowflake `bson:"guildId"`
 	Money          int       `bson:"money"`
 	Debt           int       `bson:"debt"`
-	DailyDate      int       `bson:"dailyDate"`
+	DailyDate      string    `bson:"dailyDate"`
 	BankruptcyTime int       `bson:"bankruptcyTime"`
 	BaseMoneyTime  int       `bson:"baseMoneyTime"`
 	Coin           []*Coin   `bson:"coin"`

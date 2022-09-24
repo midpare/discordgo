@@ -24,7 +24,7 @@ type globalStruct struct {
 
 var Global globalStruct
 
-func SetGlobal() {
+func init() {
 	dbOptions := options.Client().ApplyURI(os.Getenv("MONGO_DB_URI"))
 	dbClient, err := mongo.Connect(context.TODO(), dbOptions)
 

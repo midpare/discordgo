@@ -5,6 +5,7 @@ import . "discordbot/src/utils"
 type GuildMember struct {
 	User                       *User       `json:"user"`
 	Nick                       string      `json:"nick"`
+	DisplayName                string      `json:"-"`
 	Avatar                     string      `json:"avatar"`
 	Roles                      []Snowflake `json:"roles"`
 	Joined_at                  string      `json:"joined_at"`

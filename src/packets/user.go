@@ -32,7 +32,7 @@ const (
 
 type User struct {
 	Id            Snowflake   `json:"id"`
-	Username      Snowflake   `json:"username"`
+	Username      string      `json:"username"`
 	Discriminator string      `json:"discriminator"`
 	Avatar        string      `json:"avatar"`
 	Bot           bool        `json:"bot"`
