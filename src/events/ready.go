@@ -9,8 +9,8 @@ import (
 )
 
 func Ready(data *packets.Ready) {
-
 	log.Println("success to login!")
 	arr := commands.Handle()
-	rest.Put(fmt.Sprintf("/applications/%s/commands", data.User.Id), arr)
+	result := rest.Put(fmt.Sprintf("/applications/%s/commands", data.User.Id), arr)
+	fmt.Println(string(result))
 }

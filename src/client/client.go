@@ -3,6 +3,8 @@ package client
 import (
 	"bytes"
 	"discordbot/src/events"
+	. "discordbot/src/global"
+	"discordbot/src/models"
 	. "discordbot/src/packets"
 	"discordbot/src/utils"
 	"encoding/json"
@@ -29,26 +31,31 @@ type Client struct {
 	Channels          map[utils.Snowflake]*Channel
 }
 
-func NewClient() (client Client, err error) {
+func NewClient() Client {
+	return Client{
+		Token:            os.Getenv("DISCORD_TOKEN2"),
+		ReceiveHeartbeat: make(chan bool),
+		Guilds:           make(map[utils.Snowflake]*Guild),
+		Channels:         make(map[utils.Snowflake]*Channel),
+	}
+}
+
+func (client *Client) Login() {
 	dialer := websocket.DefaultDialer
 	header := http.Header{}
 	header.Add("accept-encoding", "json")
 	websocket, _, err := dialer.Dial("wss://gateway.discord.gg/?v=10&encoding=json", header)
 
 	if err != nil {
-		return Client{}, err
+		log.Fatalf("error connecting to discord gateway\n%s\n", err)
 	}
 
-	return Client{
-		Token:            os.Getenv("DISCORD_TOKEN"),
-		Websocket:        websocket,
-		ReceiveHeartbeat: make(chan bool),
-		Guilds:           make(map[utils.Snowflake]*Guild),
-		Channels:         make(map[utils.Snowflake]*Channel),
-	}, nil
-}
+	defer websocket.Close()
 
-func (client *Client) Login() {
+	client.Lock()
+	client.Websocket = websocket
+	client.Unlock()
+
 	messageType, message, err := client.Websocket.ReadMessage()
 
 	if err != nil {
@@ -64,7 +71,7 @@ func (client *Client) Login() {
 		Operation: OperationCode_Identify,
 		Data: IdentifyData{
 			Token:   client.Token,
-			Intents: uint64(IntentsAll),
+			Intents: IntentsAll,
 			Properties: IdentifyDataProperties{
 				Os:      "window",
 				Browser: "discord",
@@ -169,6 +176,7 @@ func (client *Client) handleEvent(event *BaseEvent) {
 		}
 
 		client.Guilds[guild.Id] = guild
+		Global.Database.Gambling[guild.Id] = make(map[utils.Snowflake]*models.Gambling)
 		for _, channel := range guild.Channels {
 			client.Channels[channel.Id] = channel
 		}

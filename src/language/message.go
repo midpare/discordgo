@@ -17,9 +17,19 @@ func SetUp() {
 
 	SetMessage("Attendance check was successful! %d has been paid.\nbalance: %d -> %d", "출석체크에 성공했습니다! %d원이 지급되었습니다.\n현재 잔액: %d원 -> %d원")
 
-	SetMessage("Already join in gambling", "이미 가입된 유저입니다.")
+	SetMessage("Already join in gambling.", "이미 가입된 유저입니다.")
 
 	SetMessage("Successfully join!", "성공적으로 가입되었습니다!")
 
-	SetMessage("You are not join in gambling", "가입되지 않은 유저입니다.")
+	SetMessage("You are not join in gambling.", "가입되지 않은 유저입니다.")
+
+	SetMessage("You can't borrow more than 1 million.", "100만원을 초과하는 빚은 빌릴 수 없습니다.")
+
+	SetMessage("%d was successfully borrowed.\ndebt: %d -> %d", "성공적으로 %d원을 대출했습니다!\n현재 대출금액: %d원 -> %d원")
+
+	SetMessage("%s's debt is %d.", "%s님의 현재 대출 금액은 %d원입니다.")
+
+	SetMessage("The money to pay back is more than current debt.", "갚으려는 빚이 현재 빚보다 많습니다.")
+
+	SetMessage("%d is successfully paid back!\ndebt: %d -> %d", "성공적으로 빚 %d원을 갚았습니다!\n현재 빚: %d원 -> %d원")
 }

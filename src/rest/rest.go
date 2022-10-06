@@ -54,7 +54,7 @@ func request(method Method, endpoint string, body io.Reader) []byte {
 	}
 
 	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("Authorization", fmt.Sprintf("Bot %s", os.Getenv("DISCORD_TOKEN")))
+	req.Header.Add("Authorization", fmt.Sprintf("Bot %s", os.Getenv("DISCORD_TOKEN2")))
 
 	client := &http.Client{}
 	resp, err := client.Do(req)

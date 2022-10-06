@@ -4,7 +4,7 @@ import (
 	. "discordbot/src/global"
 	"discordbot/src/models"
 	"discordbot/src/packets"
-	. "discordbot/src/utils"
+	"log"
 
 	. "golang.org/x/text/message"
 )
@@ -23,16 +23,16 @@ var Join = &packets.ApplicationCommand{
 
 		_, e := collection[guildId][id]
 		if e {
-			message.Content = p.Sprintf("Already join in gambling")
+			message.Content = p.Sprintf("Already join in gambling.")
 			return message, false
 		}
 
 		_, e = collection[guildId]
 		if !e {
-			collection[guildId] = make(map[Snowflake]models.Gambling)
+			log.Fatalf("error to find guild member!")
 		}
 
-		collection[guildId][id] = models.Gambling{
+		collection[guildId][id] = &models.Gambling{
 			Id:      id,
 			GuildId: guildId,
 		}

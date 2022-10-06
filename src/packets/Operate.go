@@ -45,7 +45,7 @@ const (
 	IntentAutoModerationConfiguration Intent = 1<<iota + 3
 	IntentAutoModerationExecution     Intent = 1 << iota
 
-	IntentsAllWithoutPrivileged = IntentGuilds |
+	IntentsAll = IntentGuilds |
 		IntentGuildBans |
 		IntentGuildEmojis |
 		IntentGuildIntegrations |
@@ -60,9 +60,7 @@ const (
 		IntentDirectMessageTyping |
 		IntentGuildScheduledEvents |
 		IntentAutoModerationConfiguration |
-		IntentAutoModerationExecution
-
-	IntentsAll = IntentsAllWithoutPrivileged |
+		IntentAutoModerationExecution |
 		IntentGuildMembers |
 		IntentGuildPresences |
 		IntentMessageContent
@@ -89,7 +87,7 @@ type Identify struct {
 
 type IdentifyData struct {
 	Token      string                 `json:"token"`
-	Intents    uint64                 `json:"intents"`
+	Intents    Intent                 `json:"intents"`
 	Properties IdentifyDataProperties `json:"properties"`
 }
 

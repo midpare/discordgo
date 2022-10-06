@@ -31,7 +31,7 @@ func InteractionCreate(interaction *packets.Interaction) {
 	if event.Category == "도박" {
 		_, e := Global.Database.Gambling[guildId][Id]
 		if event.Name != "가입" && !e {
-			message.Content = p.Sprintf("You are not join in gambling")
+			message.Content = p.Sprintf("You are not join in gambling.")
 			interaction.ErrorReply(message)
 			return
 		}
